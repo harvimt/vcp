@@ -4,7 +4,7 @@
 			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="800" minHeight="600"
 			   applicationComplete="init()">
 	<fx:Declarations>
-		<s:RemoteObject showBusyCursor="true" source="node" id="node" destination="amfphp" endpoint="http://localhost:8888/drupal/services/amfphp">
+		<s:RemoteObject showBusyCursor="true" source="node" id="node" destination="amfphp" endpoint="http://host-135-47.dhcp.pdx.edu:8888/drupal/services/amfphp">
 			<s:method name="get" result="result_node_get(event)" fault="fault_node_get(event)"/>
 		</s:RemoteObject>
 	</fx:Declarations>
@@ -15,18 +15,13 @@
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			private function result_node_get(event:ResultEvent):void{
-				Alert.show(event.result.toString());			
+				Alert.show(event.result.body.toString());			
 			}
 			private function fault_node_get(event:FaultEvent):void{
 				Alert.show(event.fault.faultString + "\n" + event.fault.faultCode + "\n" + event.fault.faultDetail);
 			}
 			private function init():void{
-				//var node_get:AbstractOperation = node.getOperation('node');
-				//node_get.arguments =
-				var args:Object = new Object();
-				args.nid = 1;
 				node.get(1);
-				//node.get({'nid':1});
 			}
 		]]>
 	</fx:Script>
