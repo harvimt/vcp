@@ -1,11 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
 			   xmlns:s="library://ns.adobe.com/flex/spark" 
-			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="800" minHeight="600">
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="800" minHeight="600"
+			   applicationComplete="init()">
 	<fx:Declarations>
-		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		<s:RemoteObject showBusyCursor="true" destination="my-amfphp" source="node" id="node">
+			<s:method name="get" result="result_node_get(event)" fault="fault_node_get(event)"/>
+		</s:RemoteObject>
 	</fx:Declarations>
-	
+	<fx:Script>
+		<![CDATA[
+			import mx.controls.Alert;
+			import mx.rpc.AbstractOperation;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			private function result_node_get(event:ResultEvent):void{
+				Alert.show(event.result.toString());			
+			}
+			private function fault_node_get(event:FaultEvent):void{
+				Alert.show('Fault');
+			}
+			private function init():void{
+				//var node_get:AbstractOperation = node.getOperation('node');
+				//node_get.arguments =
+				var args:Object = new Object();
+				args.nid = 1;
+				node.get(args);
+			}
+		]]>
+	</fx:Script>
 	<mx:Text>
 		<mx:text>Foobar!</mx:text>
 	</mx:Text>
