@@ -4,13 +4,31 @@
 			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="800" minHeight="600"
 			   applicationComplete="init()">
 	<fx:Declarations>
-		<s:RemoteObject showBusyCursor="true" source="node" id="node" destination="amfphp" endpoint="http://host-135-47.dhcp.pdx.edu:8888/drupal/services/amfphp">
+		<s:RemoteObject showBusyCursor="true" source="node" id="node" destination="amfphp" endpoint="{drupal_root}/services/amfphp">
 			<s:method name="get" result="result_node_get(event)" fault="generic_fault(event)"/>
 		</s:RemoteObject>
-		<s:RemoteObject showBusyCursor="true" source="views" id="views" destination="amfphp" endpoint="http://host-135-47.dhcp.pdx.edu:8888/drupal/services/amfphp">
+		<s:RemoteObject showBusyCursor="true" source="views" id="views" destination="amfphp" endpoint="{drupal_root}/services/amfphp">
 			<s:method name="get" result="result_views_get(event)" fault="generic_fault(event)"/>
 		</s:RemoteObject>
+		<mx:NumberValidator id="startSegmentValidator"
+							source="{start_segment_input}" property="text"
+							minValue="0" maxValue="{max_segments}"
+							lowerThanMinError="Must be greater than 0"
+							exceedsMaxError="Must be less than Total Segments in video"
+							invalidCharError="Must be a number."
+							integerError="Must be a whole number"/>
+		<mx:NumberValidator id="endSegmentValidator"
+							source="{stop_segment_input}" property="text"
+							minValue="{start_segment_input.text}" maxValue="{max_segments}"
+							lowerThanMinError="Stop Segment must be after Start Segment"
+							exceedsMaxError="Must be less than Total Segments in video"
+							invalidCharError="Must be a number."
+							integerError="Must be a whole number"/>
 	</fx:Declarations>
+	<s:states>
+		<s:State name="normal"/>
+		<s:State name="start_stop_segment"/>
+	</s:states>
 	<fx:Script>
 		<![CDATA[
 			import flash.utils.flash_proxy;
@@ -23,12 +41,26 @@
 			import mx.utils.ArrayUtil;
 			import mx.utils.ObjectProxy;
 			
+			//Flashvar parameters
+			private var video_nid:int = 0;
+			private const drupal_root:String = 'http://host-135-47.dhcp.pdx.edu:8888/drupal';
+			private const project_nid:int = 2; //nid of the project node
+			
+			//Bindables
 			[Bindable] private var coding_parameters:ArrayCollection = new ArrayCollection();
-			//private var coding_parameters_nb:ArrayCollection = new ArrayCollection(); //nb = not bindable
-			//[Bindable] private var coding_params_values:ArrayCollection = new ArrayCollection();
+			[Bindable] private var the_video:ObjectProxy = new ObjectProxy();
+			[Bindable] private var the_project:ObjectProxy = new ObjectProxy();
+			[Bindable] private var max_segments:int = 100; //calculated from video length/segment size 
+			
 			private function init():void{
-				
+				if(parameters.nid){
+					video_nid = parameters.nid;
+				}else{
+					video_nid = 3; //for debugging mostly
+				}
 				views.get('parameters');
+				node.get(video_nid);
+				node.get(project_nid);
 			}
 			
 			private function result_node_get(event:ResultEvent):void{
@@ -46,6 +78,16 @@
 							break;
 						}
 					}
+				} else if(event.result.type == 'video'){
+					the_video = new ObjectProxy(event.result);
+					
+					if(!event.result.field_start_segment[0].value || !event.result.field_end_segment[0].value){
+						currentState = 'start_stop_segment';
+						start_segment_input.text = event.result.field_start_segment[0].value;
+						stop_segment_input.text = event.result.field_end_segment[0].value;
+					}
+				} else if(event.result.type == 'project'){
+					the_project = new ObjectProxy(event.result);
 				}
 				
 			}
@@ -54,7 +96,6 @@
 				Alert.show(event.fault.faultString + "\n" + event.fault.faultCode + "\n" + event.fault.faultDetail);
 			}
 	
-			
 			private function result_views_get(event:ResultEvent):void{
 				coding_parameters = new ArrayCollection();
 				for(var i:int = 0; i < event.result.length; i += 1){
@@ -64,16 +105,31 @@
 			}
 		]]>
 	</fx:Script>
-	
+
 	<mx:VBox>
 		<mx:HBox>
-			<mx:Text text="Placeholder, video player goes here"/>
+			<mx:Text text="{the_video.title}"/>
+		</mx:HBox>
+		<mx:VBox includeIn="start_stop_segment" id="start_stop_box">
+			<mx:Text text="Primary Scorer Please Select Start and End Segments"/>
+			<mx:HBox>
+				<s:Label text="Start Segment"/><s:TextInput id="start_segment_input"/>
+				<s:Button id="start_segment_btn" label="Set to Current"/> 
+			</mx:HBox>
+			<mx:HBox>
+				<s:Label text="Stop Segment"/><s:TextInput id="stop_segment_input"/>
+				<s:Button id="stop_segment_btn" label="Set to Current"/> 
+			</mx:HBox>
+			<mx:Button id="start_stop" label="Save Start and Stop Segment" click="currentState='normal'"/>
+		</mx:VBox>
+		<mx:HBox>
+			<mx:Text text="Player Goes Here"/>
 		</mx:HBox>
 		<mx:Repeater id="params_rpt" dataProvider="{coding_parameters}" recycleChildren="false">
 			<mx:HBox>
 				<mx:Text text="{params_rpt.currentItem.node_title}" fontWeight="bold" width="120"/>
 				<mx:Repeater id="params_inner_rpt" dataProvider="{params_rpt.currentItem.values}" recycleChildren="false">
-					<s:RadioButton toolTip="{params_inner_rpt.currentItem.name}" value="{params_inner_rpt.currentItem.value}" />
+					<s:RadioButton toolTip="{params_inner_rpt.currentItem.name}" value="{params_inner_rpt.currentItem.value}" enabled="{currentState != 'start_stop_segment'}"/>
 				</mx:Repeater>
 			</mx:HBox>
 		</mx:Repeater>
