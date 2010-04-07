@@ -5,27 +5,78 @@
 			   applicationComplete="init()">
 	<fx:Declarations>
 		<s:RemoteObject showBusyCursor="true" source="node" id="node" destination="amfphp" endpoint="http://host-135-47.dhcp.pdx.edu:8888/drupal/services/amfphp">
-			<s:method name="get" result="result_node_get(event)" fault="fault_node_get(event)"/>
+			<s:method name="get" result="result_node_get(event)" fault="generic_fault(event)"/>
+		</s:RemoteObject>
+		<s:RemoteObject showBusyCursor="true" source="views" id="views" destination="amfphp" endpoint="http://host-135-47.dhcp.pdx.edu:8888/drupal/services/amfphp">
+			<s:method name="get" result="result_views_get(event)" fault="generic_fault(event)"/>
 		</s:RemoteObject>
 	</fx:Declarations>
 	<fx:Script>
 		<![CDATA[
+			import flash.utils.flash_proxy;
+			
+			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.rpc.AbstractOperation;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
-			private function result_node_get(event:ResultEvent):void{
-				Alert.show(event.result.body.toString());			
+			import mx.utils.ArrayUtil;
+			import mx.utils.ObjectProxy;
+			
+			[Bindable] private var coding_parameters:ArrayCollection = new ArrayCollection();
+			//private var coding_parameters_nb:ArrayCollection = new ArrayCollection(); //nb = not bindable
+			//[Bindable] private var coding_params_values:ArrayCollection = new ArrayCollection();
+			private function init():void{
+				
+				views.get('parameters');
 			}
-			private function fault_node_get(event:FaultEvent):void{
+			
+			private function result_node_get(event:ResultEvent):void{
+				if(event.result.type == 'parameter'){
+					for(var i:int = 0; i < coding_parameters.length; i += 1){
+						var temp:Array = [];
+						if(coding_parameters[i].nid == event.result.nid){
+							for(var j:int = 0; j < event.result.field_parameter_name.length; j += 1){
+								temp[j] = new ObjectProxy({
+									'name': event.result.field_parameter_name[j].value,
+									'value': event.result.field_parameter_value[j].value
+								});
+							}
+							coding_parameters[i].values = new ArrayCollection(temp);
+							break;
+						}
+					}
+				}
+				
+			}
+			
+			private function generic_fault(event:FaultEvent):void{
 				Alert.show(event.fault.faultString + "\n" + event.fault.faultCode + "\n" + event.fault.faultDetail);
 			}
-			private function init():void{
-				node.get(1);
+	
+			
+			private function result_views_get(event:ResultEvent):void{
+				coding_parameters = new ArrayCollection();
+				for(var i:int = 0; i < event.result.length; i += 1){
+					coding_parameters.addItem(new ObjectProxy(event.result[i]));
+					node.get(event.result[i].nid);
+				}
 			}
 		]]>
 	</fx:Script>
-	<mx:Text>
-		<mx:text>Foobar!</mx:text>
-	</mx:Text>
+	
+	<mx:VBox>
+		<mx:HBox>
+			<mx:Text text="Placeholder, video player goes here"/>
+		</mx:HBox>
+		<mx:Repeater id="params_rpt" dataProvider="{coding_parameters}" recycleChildren="false">
+			<mx:HBox>
+				<mx:Text text="{params_rpt.currentItem.node_title}" fontWeight="bold" width="120"/>
+				<mx:Repeater id="params_inner_rpt" dataProvider="{params_rpt.currentItem.values}" recycleChildren="false">
+					<s:RadioButton toolTip="{params_inner_rpt.currentItem.name}" value="{params_inner_rpt.currentItem.value}" />
+				</mx:Repeater>
+			</mx:HBox>
+		</mx:Repeater>
+	</mx:VBox>
+	
 </s:Application>
