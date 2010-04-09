@@ -81,6 +81,9 @@
 				} else if(event.result.type == 'video'){
 					the_video = new ObjectProxy(event.result);
 					
+					//the_video.field_filename[0]; //actual path
+					//the_video.field_filename_test[0].filepath; //path for the purposes of testing 
+					
 					if(!event.result.field_start_segment[0].value || !event.result.field_end_segment[0].value){
 						currentState = 'start_stop_segment';
 						start_segment_input.text = event.result.field_start_segment[0].value;
@@ -122,9 +125,28 @@
 			</mx:HBox>
 			<mx:Button id="start_stop" label="Save Start and Stop Segment" click="currentState='normal'"/>
 		</mx:VBox>
-		<mx:HBox>
+		<mx:VBox>
 			<mx:Text text="Player Goes Here"/>
-		</mx:HBox>
+			<s:VideoPlayer
+				id="vid_display"
+				autoPlay="false"
+				source="{drupal_root}/{the_video.field_filename_test[0].filepath}"
+				enabled="{currentState != 'start_stop_segment'}"
+				skinClass="CustomVideoPlayerSkin"/>
+			
+			<!--
+			<mx:HBox>
+				<s:Button label="|&lt;&lt;&lt;"/>
+				<s:Button label="|&lt;&lt;"/>
+				<s:Button visible="{!vid_display.playing}" includeInLayout="{!vid_display.playing}" label="&gt;" click="vid_display.play()" /> 
+				<s:Button visible="{vid_display.playing}" includeInLayout="{vid_display.playing}" label="||" click="vid_display.pause()"/>
+				<s:Button label="&gt;&gt;|"/>
+				<s:Button label="&gt;&gt;&gt;|"/>
+			</mx:HBox>
+			-->
+			
+			
+		</mx:VBox>
 		<mx:Repeater id="params_rpt" dataProvider="{coding_parameters}" recycleChildren="false">
 			<mx:HBox>
 				<mx:Text text="{params_rpt.currentItem.node_title}" fontWeight="bold" width="120"/>
@@ -133,6 +155,5 @@
 				</mx:Repeater>
 			</mx:HBox>
 		</mx:Repeater>
-	</mx:VBox>
-	
+	</mx:VBox>	
 </s:Application>
