@@ -2,6 +2,7 @@
 <s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
 			   xmlns:s="library://ns.adobe.com/flex/spark" 
 			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="800" minHeight="600"
+			   xmlns:vcp="*"
 			   applicationComplete="init()">
 	<fx:Declarations>
 		<s:RemoteObject showBusyCursor="true" source="node" id="node" destination="amfphp" endpoint="{drupal_root}/services/amfphp">
@@ -126,25 +127,12 @@
 			<mx:Button id="start_stop" label="Save Start and Stop Segment" click="currentState='normal'"/>
 		</mx:VBox>
 		<mx:VBox>
-			<mx:Text text="Player Goes Here"/>
-			<s:VideoPlayer
+			<vcp:CustomVideoPlayer
 				id="vid_display"
 				autoPlay="false"
 				source="{drupal_root}/{the_video.field_filename_test[0].filepath}"
 				enabled="{currentState != 'start_stop_segment'}"
 				skinClass="CustomVideoPlayerSkin"/>
-			
-			<!--
-			<mx:HBox>
-				<s:Button label="|&lt;&lt;&lt;"/>
-				<s:Button label="|&lt;&lt;"/>
-				<s:Button visible="{!vid_display.playing}" includeInLayout="{!vid_display.playing}" label="&gt;" click="vid_display.play()" /> 
-				<s:Button visible="{vid_display.playing}" includeInLayout="{vid_display.playing}" label="||" click="vid_display.pause()"/>
-				<s:Button label="&gt;&gt;|"/>
-				<s:Button label="&gt;&gt;&gt;|"/>
-			</mx:HBox>
-			-->
-			
 			
 		</mx:VBox>
 		<mx:Repeater id="params_rpt" dataProvider="{coding_parameters}" recycleChildren="false">
